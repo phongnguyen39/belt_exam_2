@@ -1,0 +1,98 @@
+*{
+    border-radius: 5px;
+}
+
+/*Font*/
+/* {  
+    display: 
+    vertical-align:
+    width:
+    height:
+    margin:
+    padding:
+    text-decoration:
+    border-radius:
+    box-shadow:
+    border:
+    background:
+    background-color:
+    font-family:
+    font-size:
+    font-style:
+    font-weight:
+    color:
+    list-style:
+}*/
+
+#flash{
+    color: red;
+    text-align: center;
+}
+
+.outer_container{
+    background-image: url("wall.jpg");
+    background-size: contain;
+}
+
+.container{
+    margin: 1em auto;
+    padding: 2em;
+    background-image: radial-gradient(rgb(92, 106, 121), rgb(36, 66, 95) );
+    height: 100%;
+    width: 50%;
+    text-align: center;
+    box-shadow: 1px 1px rgb(51, 51, 51);
+}
+
+.index_left_box{
+    display: inline-block;
+    margin-right: 5em;
+}
+
+.index_right_box{
+    display: inline-block;
+    vertical-align: top;
+}
+
+a{
+    color: rgb(10, 192, 192);
+}
+
+p, h4, h3, h2, h1{
+    margin: .2em;
+    color: white;
+}
+
+h1{
+    margin: .8em;
+    text-shadow: .05em .05em gray;
+}
+
+input{
+    margin: .2em;
+}
+
+.submit_button{
+    margin: 1em auto;
+    background-color: rgb(7, 146, 146);
+    border: 0px;
+    box-shadow: .5px .5px white;
+    color: white;
+    display: block;
+    text-align: center;
+}
+
+.dropdown{
+    width: 100%;
+    height: 10%;
+    margin-top: 1em;
+    background: rgb(155, 198, 211);
+    color: black;
+}
+
+.send_box_msg, textarea{
+    margin: auto;
+    width: 100%;
+}
+
+
