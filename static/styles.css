@@ -29,9 +29,13 @@
     text-align: center;
 }
 
+
+.top_row{
+    margin-bottom:1em;
+}
+
 .outer_container{
-    background-image: url("wall.jpg");
-    background-size: contain;
+    background: gray;
 }
 
 .container{
@@ -46,7 +50,8 @@
 
 .index_left_box{
     display: inline-block;
-    margin-right: 5em;
+    /* width: 50%; */
+    
 }
 
 .index_right_box{
@@ -54,11 +59,24 @@
     vertical-align: top;
 }
 
+.left_box{
+    display: inline-block;
+    font-size: 20px;
+    /* width: 50%; */
+    
+}
+
+.right_box{
+    display: inline-block;
+    vertical-align: top;
+}
+
+
 a{
     color: rgb(10, 192, 192);
 }
 
-p, h4, h3, h2, h1{
+p, h4, h3, h2, h1, label, td, th, a{
     margin: .2em;
     color: white;
 }
@@ -82,13 +100,7 @@ input{
     text-align: center;
 }
 
-.dropdown{
-    width: 100%;
-    height: 10%;
-    margin-top: 1em;
-    background: rgb(155, 198, 211);
-    color: black;
-}
+
 
 .send_box_msg, textarea{
     margin: auto;
@@ -96,3 +108,18 @@ input{
 }
 
 
+.left_align_box{
+    text-align: left;
+}
+
+table{
+    margin-top: 1em;
+    background: gray;
+    width: 100%;
+}
+
+th{
+    background: rgba(82, 82, 82, 0.301);
+    border-radius: 0%;
+    
+}

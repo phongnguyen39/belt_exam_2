@@ -12,11 +12,6 @@ bcrypt = Bcrypt(app)
 EMAIL_REGEX = re.compile(r'^[a-zA-z0-9.+_-]+@[a-zA-z0-9.+_-]+\.[a-zA-Z]+$')
 
 
-# REPLACE THE FOLLOWING
-# show_all.HTML
-# messages ~ comments ~ reviews 
-
-
 # LOGIN & REGISTRATION HOMEPAGE
 @app.route('/')
 def index():
@@ -27,7 +22,7 @@ def index():
 def registration():
 
     # Session Information
-    session['first_name'] =request.form['first_name']
+    session['first_name'] = request.form['first_name']
     session['last_name'] = request.form['last_name']
     session['email'] = request.form['email']
     session['password'] = request.form['password']
@@ -64,6 +59,7 @@ def registration():
         'email': request.form['email']
     }
     existing_email = belt_exam_2.query_db(query, data)
+
     # print('*'*20,existing_email)
     if len(existing_email) > 0:
         flash('Email already exist.')
@@ -96,10 +92,10 @@ def registration():
 
         users = belt_exam_2.query_db(query, data)
         # print('*----*'*20,users)
-        
+
         flash("You've successfully registered!")
 
-        return redirect('/show_all')
+        return redirect('/dashboard')
 
 
 # LOGIN VALIDATIONS
@@ -108,7 +104,6 @@ def login():
 
     # Session Information
     session['email'] = request.form['email']
-
 
     # is_valid = True
 
@@ -127,7 +122,7 @@ def login():
     logins = belt_exam_2.query_db(query, data)
     # print(logins,'*/'*30)
     # print('*-*'*20,request.form['email'])
-    
+
     if len(logins) == 0:
         flash("Failed login! Email not found.")
         return redirect('/')
@@ -136,101 +131,297 @@ def login():
     if logins:
         if bcrypt.check_password_hash(logins[0]['password'], request.form['password']):
             flash("Logged in successfully!")
-            return redirect('/show_all')
+            return redirect('/dashboard')
         else:
             flash("Failed login! Password was incorrect.")
             return redirect('/')
 
-# show_all PAGE
+# dashboard PAGE
 
-@app.route('/show_all')
-def show_all():
+
+@app.route('/dashboard')
+def dashboard():
 
     belt_exam_2 = connectToMySQL('belt_exam_2')
     query = 'SELECT * FROM users WHERE email = %(email)s;'
-    data = {'email' : session['email']}
-    users = belt_exam_2.query_db(query,data)
+    data = {'email': session['email']}
+    users = belt_exam_2.query_db(query, data)
+    session['id'] = users[0]['id']
+    # print(session['id'],'*'*40)
+    # print('---'*20, users[0]['id'])
+    # print(users)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'SELECT * FROM jobs WHERE job_taker IS NULL;'
+    all_jobs = belt_exam_2.query_db(query)
+    # print('*'*20, all_jobs['user_id'])
+    # print(all_jobs)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'SELECT * FROM jobs JOIN users ON jobs.user_id = users.id WHERE jobs.job_taker = %(user_id)s;'
+    data = {
+        'user_id' : session['id']
+    }
+    user_jobs = belt_exam_2.query_db(query,data)
+   
+
+    return render_template('dashboard.html', users=users, all_jobs=all_jobs, user_jobs=user_jobs)
+
+
+# CREATE A JOB FORM
+
+@app.route('/jobs/new')
+def newjob():
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'SELECT * FROM users WHERE email = %(email)s;'
+    data = {'email': session['email']}
+    users = belt_exam_2.query_db(query, data)
+    session['id'] = users[0]['id']
+    return render_template('create_job.html', users=users)
+
+# CREATE A JOB SUBMISSION
+
+
+@app.route('/create_job', methods = ['post'])
+def create_job():
+    # print('*'*20, request.form['job_title'])
+    # print('*'*20, request.form['job_description'])
+    # print('*'*20, request.form['address'])
+    # print('*'*20, request.form['job_categories'])
+    # print('*'*20, request.form['other'])
+    # print('*'*20, session['id'])
+
+    is_valid = True
+
+    # Job_title length validation
+    if len(request.form['job_title']) < 3:
+        is_valid = False
+        # print('*'*20, False, '*'*20)
+        flash('A job must consist of at least 3 characters!')
+        return redirect('/jobs/new')
+
+    # location length validation
+    if len(request.form['address']) < 3:
+        is_valid = False
+        # print('*'*20, False, '*'*20)
+        flash('A location must be provided')
+        return redirect('/jobs/new')
+
+    # description length validation
+    if len(request.form['job_description']) < 3:
+        is_valid = False
+        # print('*'*20, False, '*'*20)
+        flash('A description must be provided')
+        return redirect('/jobs/new')
+
+    # Add a job
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'INSERT INTO jobs (job_title, job_description, address, user_id) VALUES (%(job_title)s,%(job_description)s, %(address)s, %(user_id)s)'
+    data = {
+        'job_title': request.form['job_title'],
+        'job_description': request.form['job_description'],
+        'address': request.form['address'],
+        'user_id': session['id']
+    }
+    job = belt_exam_2.query_db(query, data)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'INSERT INTO job_categories (job_categories,job_id) VALUES (%(job_categories)s,%(job_id)s)'
+    data = {
+        'job_categories': request.form['category_1'],
+        'job_id': job
+    }
+    job_categories = belt_exam_2.query_db(query, data)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'INSERT INTO job_categories (job_categories,job_id) VALUES (%(job_categories)s,%(job_id)s)'
+    data = {
+        'job_categories': request.form['category_2'],
+        'job_id': job
+    }
+    job_categories = belt_exam_2.query_db(query, data)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'INSERT INTO job_categories (job_categories,job_id) VALUES (%(job_categories)s,%(job_id)s)'
+    data = {
+        'job_categories': request.form['category_3'],
+        'job_id': job
+    }
+    job_categories = belt_exam_2.query_db(query, data)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'INSERT INTO job_categories (job_categories,job_id) VALUES (%(job_categories)s,%(job_id)s)'
+    data = {
+        'job_categories': request.form['category_4'],
+        'job_id': job
+    }
+    job_categories = belt_exam_2.query_db(query, data)
+
+    return redirect('/dashboard')
+
+#View Job
+
+@app.route('/job/<id>')
+def job_id(id):
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'SELECT * FROM users WHERE email = %(email)s;'
+    data = {'email': session['email']}
+    users = belt_exam_2.query_db(query, data)
     session['id'] = users[0]['id']
 
+
+    # Job_id 
     belt_exam_2 = connectToMySQL('belt_exam_2')
-    query = 'SELECT * FROM users;'
-    all_users = belt_exam_2.query_db(query)
-    # print('*--*'*30, all_users)
-
-    return render_template('show_all.html', users = users, all_users = all_users)
-
-
-# INSERTIONS
-
-@app.route('/message', methods = ['post'])
-def message():  
-
-    print('*'*20,request.form['message'])
-    print('*'*20,session['id'])
-    print('*'*20,request.form['receipient'])
-    
-    #### need to fix foreign key issue on tables
-
-    # Send a message #
-    belt_exam_2 = connectToMySQL('belt_exam_2')
-    query = 'INSERT INTO messages (message, sender_id, receipient_id) VALUES (%(message)s, %(sender_id)s,%(receipient_id)s)'
+    query = 'SELECT *, group_concat(job_categories,"") AS categories FROM jobs JOIN job_categories ON job_categories.job_id =jobs.id WHERE jobs.id = %(job_id)s GROUP BY %(job_id)s;'
     data = {
-        'message': request.form['message'],
-        'sender_id': session['id'],
-        'receipient_id': request.form['receipient']
+        'job_id': id
     }
-    message = belt_exam_2.query_db(query, data)
-    print('*'*30, message)
-    return redirect('/show_all')
-
-@app.route('/comment', methods = ['post'])
-def comment():  
-    
-    #  Send a comment #
-    belt_exam_2 = connectToMySQL('belt_exam_2')
-    query = 'INSERT INTO authors (author_name) VALUES (%(author_name)s)'  #
-    data = {
-        'author_name': request.form['author_name']
-    }
-    # = #.query_db(query, data)
-    return redirect('/show_all')
+    jobs = belt_exam_2.query_db(query,data)
+    print(jobs)
+    return render_template('job_id.html', users = users, jobs = jobs)
 
 # UPDATES
 
-@app.route('/update', methods = ['post'])
-def update():  
-    
-    #  Adds Author
+@app.route('/update/<id>', methods=['post'])
+def update(id):
+
+    print('*-'*20,request.form['job_title'])
+
+    #Validations
+    is_valid = True
+
+    # Job_title length validation
+    if len(request.form['job_title']) < 3:
+        is_valid = False
+        print('*'*20, False, '*'*20)
+        flash('A job must consist of at least 3 characters!')
+        return redirect(f'/edit/{id}')
+
+    # location length validation
+    if len(request.form['address']) < 3:
+        is_valid = False
+        print('*'*20, False, '*'*20)
+        flash('A location must be provided')
+        return redirect(f'/edit/{id}')
+
+    # description length validation
+    if len(request.form['job_description']) < 3:
+        is_valid = False
+        print('*'*20, False, '*'*20)
+        flash('A description must be provided')
+        return redirect(f'/edit/{id}')
+
     belt_exam_2 = connectToMySQL('belt_exam_2')
-    query = 'UPDATE database_name SET field_name = "%()s", field_name2 = "%()s" '  #
+    query = 'SELECT * FROM jobs JOIN users ON jobs.user_id = users.id WHERE users.id = %(user_id)s;'
     data = {
-        'author_name': request.form['author_name']
+        'user_id' : session['id']
     }
-    # = #.query_db(query, data)
-    return redirect('/show_all')
+    user_jobs = belt_exam_2.query_db(query,data)
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'UPDATE jobs SET job_title = %(job_title)s, job_description = %(job_description)s, address = %(address)s WHERE jobs.id = %(job_id)s'
+    data = {
+        'job_title': request.form['job_title'],
+        'job_description': request.form['job_description'],
+        'address': request.form['address'],
+        'job_id' : id
+        # 'other': request.form['other']
+    }
+    jobs = belt_exam_2.query_db(query, data)
+    print(jobs)
+
+    return redirect('/dashboard')
+
+
+# Edit the job page
+@app.route('/edit/<id>')
+def edit(id):
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'SELECT * FROM jobs JOIN users ON jobs.user_id = users.id WHERE users.id = %(user_id)s AND jobs.id = %(job_id)s;'
+    data = {
+        'user_id' : session['id'],
+        'job_id' : id
+    }
+    users = belt_exam_2.query_db(query,data)
+    print(users)
+
+    return render_template('edit_job.html', users = users)
+
+    
+
+@app.route('/pick_up_job/<id>')
+def pick_up_job(id):
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'UPDATE jobs SET jobs.job_taker =%(user_id)s WHERE jobs.id = %(jobs_id)s;'
+    data = {
+        'jobs_id' : id,
+        'user_id' : session['id']
+    }
+    user_jobs = belt_exam_2.query_db(query,data)
+
+    return redirect('/dashboard')
+
+@app.route('/giveup/<id>')
+def giveup(id):
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'UPDATE jobs SET job_taker = NULL WHERE jobs.id = %(jobs_id)s;'
+    data = {
+        'jobs_id' : id
+    }
+    user_jobs = belt_exam_2.query_db(query,data)
+
+    return redirect('/dashboard')
 
 # DELETIONS
 
-@app.route('/delete', methods = ['post'])
-def delete():  
-    
-    #  Adds Author
+@app.route('/remove/<id>')
+def remove(id):
+
     belt_exam_2 = connectToMySQL('belt_exam_2')
-    query = 'DELETE FROM authors (author_name) WHERE  %()s'  #
+    query = 'DELETE from jobs WHERE jobs.id = %(jobs_id)s;'
     data = {
-        'author_name': request.form['author_name']
+        'jobs_id' : id
     }
-    # = #.query_db(query, data)
-    return redirect('/show_all')
+    user_jobs = belt_exam_2.query_db(query,data)
+
+    return redirect('/dashboard')
+
+
+@app.route('/done/<id>')
+def done(id):
+
+    belt_exam_2 = connectToMySQL('belt_exam_2')
+    query = 'DELETE from jobs WHERE jobs.id = %(jobs_id)s;'
+    data = {
+        'jobs_id' : id
+    }
+    user_jobs = belt_exam_2.query_db(query,data)
+
+    return redirect('/dashboard')
+
+
 
 
 # RETURN TO HOME BUTTON
 
 @app.route('/home')
 def home():
-    return redirect('/')  # CHANGE ME
+    return redirect('/dashboard')
+
+# CANCEL BUTTON
+
+
+@app.route('/cancel', methods=['post'])
+def cancel():
+    return redirect('/dashboard')
 
 # LOGOUT BUTTON
+
 
 @app.route('/logoff')
 def logoff():
